@@ -43,6 +43,7 @@ react-native link sp-react-native-mqtt
 
 Add `pod 'MQTTClient'` to your podfile and `pod install`
 
+For using certificate, add cer.p12 to xcode project
 <details>
 <summary>Alternatively you can manually link the library on iOS (click to expand)</summary>
 
@@ -91,32 +92,41 @@ import MQTT from 'sp-react-native-mqtt';
 
 /* create mqtt client */
 MQTT.createClient({
-  uri: 'mqtt://test.mosquitto.org:1883',
-  clientId: 'your_client_id'
-}).then(function(client) {
+    uri: 'mqtts://192.168.1.172:1883',
+    port: 1883,
+    host: '192.168.1.172',
+    clientId: 'testCer',
+    auth: true,
+    user: 'username',
+    pass: 'password',
+    tls: true,
+    certificate: 'cer', //certificate file name "cer.p12"
+    certificatePass: 'secret',
+  })
+    .then(function (client) {
+      client.on('closed', function () {
+        console.log('mqtt.event.closed');
+      });
 
-  client.on('closed', function() {
-    console.log('mqtt.event.closed');
-  });
+      client.on('error', function (msg) {
+        console.log('mqtt.event.error', msg);
+      });
 
-  client.on('error', function(msg) {
-    console.log('mqtt.event.error', msg);
-  });
+      client.on('message', function (msg) {
+        console.log('mqtt.event.message', msg);
+      });
 
-  client.on('message', function(msg) {
-    console.log('mqtt.event.message', msg);
-  });
+      client.on('connect', function () {
+        console.log('connected');
+        client.subscribe('/data', 0);
+        client.publish('/data', 'test', 0, false);
+      });
 
-  client.on('connect', function() {
-    console.log('connected');
-    client.subscribe('/data', 0);
-    client.publish('/data', "test", 0, false);
-  });
-
-  client.connect();
-}).catch(function(err){
-  console.log(err);
-});
+      client.connect();
+    })
+    .catch(function (err) {
+      console.log(err);
+    });
 
 ```
 
@@ -131,6 +141,8 @@ MQTT.createClient({
   * `pass`: string password
   * `auth`: true/false - override = true Set to true if `user` or `pass` exist
   * `clientId`: string client id
+  * `certificate`: certificate file name "cer.p12"
+  * `certificatePass`: passworc for cer file 
   * `keepalive`
 
 * `client`
