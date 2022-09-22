@@ -99,7 +99,7 @@ MQTT.createClient({
     user: 'username',
     pass: 'password',
     tls: true,
-    certificate: './cer', // link your path for certificate file name "cer.p12"
+    certificate: 'cer', // certificate file name "cer.p12", add your cer.p12 to xcode project
     certificatePass: 'secret',
   })
     .then(function (client) {
