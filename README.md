@@ -43,7 +43,6 @@ react-native link sp-react-native-mqtt
 
 Add `pod 'MQTTClient'` to your podfile and `pod install`
 
-For using certificate, add cer.p12 to xcode project
 <details>
 <summary>Alternatively you can manually link the library on iOS (click to expand)</summary>
 
@@ -92,15 +91,15 @@ import MQTT from 'sp-react-native-mqtt';
 
 /* create mqtt client */
 MQTT.createClient({
-    uri: 'mqtts://192.168.1.172:1883',
+    uri: 'mqtts://host:port',
     port: 1883,
-    host: '192.168.1.172',
-    clientId: 'testCer',
+    host: '192.168.1.1',
+    clientId: 'yourId',
     auth: true,
     user: 'username',
     pass: 'password',
     tls: true,
-    certificate: 'cer', //certificate file name "cer.p12"
+    certificate: './cer', // link your path for certificate file name "cer.p12"
     certificatePass: 'secret',
   })
     .then(function (client) {
