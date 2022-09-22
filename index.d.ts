@@ -7,6 +7,8 @@ interface IMqttClientOptions {
 	port?: number;
 	protocol?: 'mqtt' | 'tcp' | 'wss' | 'mqtts' | 'ws';
 	tls?: boolean;
+	certificate?: string; // only used when tls is true
+	certificatePass?: string; // only used when tls is true
 	keepalive?: number; // seconds
 	protocolLevel?: number;
 	clean?: boolean;

@@ -7,6 +7,7 @@
 //  Updated by NaviOcean on 01/04/18
 //  Updated by Scott Spitler of KUHMUTE on 03/01/2021.
 //  Copyright © 2021 Scott Spitler. All rights reserved.
+// Updated by koten551 on 22/09/2022
 //
 
 #import "Mqtt.h"
@@ -43,7 +44,9 @@
                                 @"willMsg": [NSNull null],
                                 @"willtopic": @"",
                                 @"willQos": @0,
-                                @"willRetainFlag": @NO
+                                @"willRetainFlag": @NO,
+                                @"certificate": @""
+                                @"certificate": @""
                                 };
         
     }
@@ -63,9 +66,6 @@
     for (NSString *key in options.keyEnumerator) { // Replace default options
         [self.options setValue:options[key] forKey:key];
     }
-
-   
-    
     
     return self;
 }
@@ -76,6 +76,11 @@
     if(self.options[@"tls"]) {
         securityPolicy = [MQTTSSLSecurityPolicy policyWithPinningMode:MQTTSSLPinningModeNone];
         securityPolicy.allowInvalidCertificates = YES;
+    }
+    NSArray *certificates = nil;
+    if(securityPolicy != nil) {
+        NSString *path = [[NSBundle bundleForClass:[self class]] pathForResource:self.options[@"certificate"] ofType:@"p12"];
+        certificates = [MQTTCFSocketTransport clientCertsFromP12:path passphrase:self.options[@"certificatePass"]];
     }
     
     NSData *willMsg = nil;
@@ -107,7 +112,7 @@
                  willRetainFlag:[self.options[@"willRetainFlag"] boolValue]
                    withClientId:[self.options valueForKey:@"clientId"]
                  securityPolicy:securityPolicy
-                   certificates:nil
+                   certificates:certificates
                   protocolLevel:MQTTProtocolVersion311
                  connectHandler:^(NSError *error) {
          }];
