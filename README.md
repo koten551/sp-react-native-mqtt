@@ -22,13 +22,13 @@ A [react-native](https://github.com/facebook/react-native) mqtt client module th
 
 #### Step 1:
 ```bash
-npm install sp-react-native-mqtt --save
+npm install koten551/sp-react-native-mqtt --save
 ```
 
 or
 
 ```bash
-yarn add sp-react-native-mqtt
+yarn add koten551/sp-react-native-mqtt
 ```
 
 #### Step 2: (Skip this step if you are using RN 0.60 or above as the module will be auto-linked)
