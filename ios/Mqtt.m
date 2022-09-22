@@ -45,8 +45,8 @@
                                 @"willtopic": @"",
                                 @"willQos": @0,
                                 @"willRetainFlag": @NO,
-                                @"certificate": @""
-                                @"certificate": @""
+                                @"certificate": @"",
+                                @"certificatePass": @""
                                 };
         
     }
