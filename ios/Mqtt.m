@@ -45,7 +45,6 @@
                                 @"willtopic": @"",
                                 @"willQos": @0,
                                 @"willRetainFlag": @NO,
-                                @"certificate": @"",
                                 @"certificatePass": @""
                                 };
         
@@ -78,7 +77,7 @@
         securityPolicy.allowInvalidCertificates = YES;
     }
     NSArray *certificates = nil;
-    if(securityPolicy != nil) {
+    if(securityPolicy != nil && self.options[@"certificate"]) {
         NSString *path = [[NSBundle bundleForClass:[self class]] pathForResource:self.options[@"certificate"] ofType:@"p12"];
         certificates = [MQTTCFSocketTransport clientCertsFromP12:path passphrase:self.options[@"certificatePass"]];
     }
