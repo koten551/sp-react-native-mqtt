@@ -28,9 +28,15 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.security.KeyManagementException;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
@@ -170,26 +176,32 @@ public class RCTMqtt implements MqttCallbackExtended {
             uri = new StringBuilder("ssl://");
             String certificateName = options.getString("certificate");
             if(certificateName.length() > 0) {
-                KeyStore clientStore = KeyStore.getInstance("PKCS12");
-                AssetFileDescriptor assetFileDescriptor = this.reactContext.getAssets().openFd(certificateName);
-                FileDescriptor fileDescriptor = assetFileDescriptor.getFileDescriptor();
-                FileInputStream streamFile = new FileInputStream(fileDescriptor);
-                clientStore.load(streamFile, options.getString("certificatePass").toCharArray());
-                KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-                kmf.init(clientStore, "testPass".toCharArray());
-                KeyManager[] kms = kmf.getKeyManagers();
+                try {
+                    KeyStore clientStore = null;
+                    clientStore = KeyStore.getInstance("PKCS12");
+                    AssetFileDescriptor assetFileDescriptor = this.reactContext.getAssets().openFd(certificateName);
+                    FileDescriptor fileDescriptor = assetFileDescriptor.getFileDescriptor();
+                    FileInputStream streamFile = new FileInputStream(fileDescriptor);
+                    clientStore.load(streamFile, options.getString("certificatePass").toCharArray());
+                    KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+                    kmf.init(clientStore, "testPass".toCharArray());
+                    KeyManager[] kms = kmf.getKeyManagers();
 
-                KeyStore trustStore = KeyStore.getInstance("JKS");
-                trustStore.load(new FileInputStream("cacerts"), "changeit".toCharArray());
+                    KeyStore trustStore = KeyStore.getInstance("JKS");
+                    trustStore.load(new FileInputStream("cacerts"), "changeit".toCharArray());
 
-                TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-                tmf.init(trustStore);
-                TrustManager[] tms = tmf.getTrustManagers();
+                    TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+                    tmf.init(trustStore);
+                    TrustManager[] tms = tmf.getTrustManagers();
 
-                SSLContext sslContext = null;
-                sslContext = SSLContext.getInstance("TLS");
-                sslContext.init(kms, tms, new SecureRandom());
-                mqttOptions.setSocketFactory(sslContext.getSocketFactory());
+                    SSLContext sslContext = null;
+                    sslContext = SSLContext.getInstance("TLS");
+                    sslContext.init(kms, tms, new SecureRandom());
+                    mqttOptions.setSocketFactory(sslContext.getSocketFactory());
+                } catch (KeyStoreException | NoSuchAlgorithmException | UnrecoverableKeyException | CertificateException | IOException | KeyManagementException e) {
+                    e.printStackTrace();
+                }
+
             } else {
                 try {
                     /*
