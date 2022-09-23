@@ -1,6 +1,8 @@
 package com.tuanpm.RCTMqtt;
 
 import androidx.annotation.NonNull;
+
+import android.content.res.AssetFileDescriptor;
 import android.util.Log;
 
 import com.facebook.react.bridge.Arguments;
@@ -24,7 +26,10 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
+import java.io.FileDescriptor;
+import java.io.FileInputStream;
 import java.io.UnsupportedEncodingException;
+import java.security.KeyStore;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -38,7 +43,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.annotation.Nullable;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
 public class RCTMqtt implements MqttCallbackExtended {
