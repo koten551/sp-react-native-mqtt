@@ -51,6 +51,7 @@ public class RCTMqtt implements MqttCallbackExtended {
     private MqttConnectOptions mqttOptions;
     private Map<String, Integer> topics = new HashMap<>();
 
+
     public RCTMqtt(@NonNull final String ref, final ReactApplicationContext reactContext, final ReadableMap options) {
         clientRef = ref;
         this.reactContext = reactContext;
@@ -72,7 +73,8 @@ public class RCTMqtt implements MqttCallbackExtended {
         defaultOptions.putInt("willQos", 0);
         defaultOptions.putBoolean("willRetainFlag", false);
         defaultOptions.putBoolean("automaticReconnect", false);
-
+        defaultOptions.putString("certificate", "");
+        defaultOptions.putString("certificatePass", "");
         createClient(options);
     }
 
@@ -134,7 +136,12 @@ public class RCTMqtt implements MqttCallbackExtended {
         if (params.hasKey("automaticReconnect")) {
             defaultOptions.putBoolean("automaticReconnect", params.getBoolean("automaticReconnect"));
         }
-
+        if (params.hasKey("certificate")) {
+            defaultOptions.putString("certificate", params.getString("certificate"));
+        }
+        if (params.hasKey("certificatePass")) {
+            defaultOptions.putString("certificatePass", params.getString("certificatePass"));
+        }
         ReadableMap options = defaultOptions;
 
         // Set this wrapper as the callback handler
@@ -152,35 +159,59 @@ public class RCTMqtt implements MqttCallbackExtended {
         StringBuilder uri = new StringBuilder("tcp://");
         if (options.getBoolean("tls")) {
             uri = new StringBuilder("ssl://");
-            try {
-                /*
-                 * http://stackoverflow.com/questions/3761737/https-get-ssl-with-android-and-
-                 * self-signed-server-certificate
-                 *
-                 * WARNING: for anybody else arriving at this answer, this is a dirty, horrible
-                 * hack and you must not use it for anything that matters. SSL/TLS without
-                 * authentication is worse than no encryption at all - reading and modifying
-                 * your "encrypted" data is trivial for an attacker and you wouldn't even know
-                 * it was happening
-                 */
-                SSLContext sslContext = SSLContext.getInstance("TLS");
-                sslContext.init(null, new X509TrustManager[] { new X509TrustManager() {
-                    public void checkClientTrusted(X509Certificate[] chain, String authType)
-                            throws CertificateException {
-                    }
+            String certificateName = options.getString("certificate");
+            if(certificateName.length() > 0) {
+                KeyStore clientStore = KeyStore.getInstance("PKCS12");
+                AssetFileDescriptor assetFileDescriptor = this.reactContext.getAssets().openFd(certificateName);
+                FileDescriptor fileDescriptor = assetFileDescriptor.getFileDescriptor();
+                FileInputStream streamFile = new FileInputStream(fileDescriptor);
+                clientStore.load(streamFile, options.getString("certificatePass").toCharArray());
+                KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+                kmf.init(clientStore, "testPass".toCharArray());
+                KeyManager[] kms = kmf.getKeyManagers();
 
-                    public void checkServerTrusted(X509Certificate[] chain, String authType)
-                            throws CertificateException {
-                    }
+                KeyStore trustStore = KeyStore.getInstance("JKS");
+                trustStore.load(new FileInputStream("cacerts"), "changeit".toCharArray());
 
-                    public X509Certificate[] getAcceptedIssuers() {
-                        return new X509Certificate[0];
-                    }
-                } }, new SecureRandom());
+                TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+                tmf.init(trustStore);
+                TrustManager[] tms = tmf.getTrustManagers();
 
+                SSLContext sslContext = null;
+                sslContext = SSLContext.getInstance("TLS");
+                sslContext.init(kms, tms, new SecureRandom());
                 mqttOptions.setSocketFactory(sslContext.getSocketFactory());
-            } catch (Exception e) {
-                e.printStackTrace();
+            } else {
+                try {
+                    /*
+                    * http://stackoverflow.com/questions/3761737/https-get-ssl-with-android-and-
+                    * self-signed-server-certificate
+                    *
+                    * WARNING: for anybody else arriving at this answer, this is a dirty, horrible
+                    * hack and you must not use it for anything that matters. SSL/TLS without
+                    * authentication is worse than no encryption at all - reading and modifying
+                    * your "encrypted" data is trivial for an attacker and you wouldn't even know
+                    * it was happening
+                    */
+                    SSLContext sslContext = SSLContext.getInstance("TLS");
+                    sslContext.init(null, new X509TrustManager[] { new X509TrustManager() {
+                        public void checkClientTrusted(X509Certificate[] chain, String authType)
+                                throws CertificateException {
+                        }
+
+                        public void checkServerTrusted(X509Certificate[] chain, String authType)
+                                throws CertificateException {
+                        }
+
+                        public X509Certificate[] getAcceptedIssuers() {
+                            return new X509Certificate[0];
+                        }
+                    } }, new SecureRandom());
+
+                    mqttOptions.setSocketFactory(sslContext.getSocketFactory());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }
 
